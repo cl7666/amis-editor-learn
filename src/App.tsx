@@ -1,4 +1,4 @@
-import Amis from "./Amis"
+import Amis from './Amis'
 
 function App() {
   return <Amis />

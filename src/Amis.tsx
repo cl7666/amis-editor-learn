@@ -1,49 +1,59 @@
-import { useState } from 'react';
-import { Editor } from 'amis-editor';
-import { render as renderAmis } from 'amis';
-import { SchemaObject } from 'amis/lib/Schema';
-import 'amis/lib/themes/default.css';
-import 'amis/lib/helper.css';
-import 'amis/sdk/iconfont.css';
-import 'amis-editor-core/lib/style.css';
-import 'amis-ui/lib/themes/cxd.css';
-import '@fortawesome/fontawesome-free/css/all.css';
-import '@fortawesome/fontawesome-free/js/all';
-import './DisabledEditorPlugin'; // 用于隐藏一些不需要的Editor预置组件
-export function Amis() {
-  const [mobile, setMobile] = useState(false);
-  const [preview, setPreview] = useState(false);
+import { useState } from 'react'
+import { Editor } from 'amis-editor'
+import { SchemaObject } from 'amis/lib/Schema'
+import { render as renderAmis } from 'amis'
+import type { Schema } from 'amis/lib/types'
+import './DisabledEditorPlugin' // 用于隐藏一些不需要的Editor预置组件
+import 'amis/lib/themes/default.css'
+import 'amis/lib/helper.css'
+import 'amis/sdk/iconfont.css'
+import 'amis-editor-core/lib/style.css'
+import 'amis-ui/lib/themes/cxd.css'
+import '@fortawesome/fontawesome-free/css/all.css'
+import '@fortawesome/fontawesome-free/js/all'
+
+type Props = {
+  defaultPageConfig?: Schema
+  codeGenHandler?: (codeObject: Schema) => void
+  pageChangeHandler?: (codeObject: Schema) => void
+}
+
+export function Amis(props: Props) {
+  const [mobile, setMobile] = useState(false)
+  const [preview, setPreview] = useState(false)
+  const [defaultPageConfig] = useState<Schema>(props.defaultPageConfig as any) // 传入配置
 
   // @ts-ignore
-  const defaultSchema: SchemaObject = window['AMIS_JSON'] || {
+  const defaultSchema: Schema | SchemaObject = defaultPageConfig || {
     type: 'page',
+    body: '',
     regions: ['body'],
     asideResizor: false,
-  };
-  const [schema, setSchema] = useState(defaultSchema);
+  }
+  const [schema, setSchema] = useState(defaultSchema)
 
-  let obj: any = defaultSchema;
+  let obj: Schema = defaultSchema
 
-  const onChange = (value: any) => {
-    obj = value;
-    console.log('change', obj);
-  };
+  const onChange = (value: Schema) => {
+    obj = value
+    console.log('change', obj)
+    props.pageChangeHandler && props.pageChangeHandler(value)
+  }
 
   const onSave = () => {
-    console.log('保存', obj);
-    console.log(schema);
-    // @ts-ignore
-    window['saveAmis'] && window['saveAmis'](obj);
-  };
+    console.log('保存', obj)
+    console.log(schema)
+    props.codeGenHandler && props.codeGenHandler(obj)
+  }
 
   const clearJSON = () => {
-    const objJson: SchemaObject = {
+    obj = {
       type: 'page',
-    };
-    setSchema(objJson);
-  };
+    }
+    setSchema(obj)
+  }
   const onGetJson = () => {
-    const objJson: SchemaObject = {
+    obj = {
       type: 'page',
       body: {
         type: 'form',
@@ -79,76 +89,77 @@ export function Amis() {
           },
         ],
       },
-    };
-    setSchema(objJson);
-  };
+    }
+    setSchema(obj)
+  }
 
   return (
-    <div style={{ height: '100% !important' }}>
+    <div
+      style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <div
         style={{
-          padding: '10px',
-          paddingBottom: '0px',
           borderBottom: '1px solid #ddd',
         }}
       >
-        <div>
-          {renderAmis({
-            type: 'form',
-            mode: 'inline',
-            title: '',
-            wrapWithPanel: false,
-            body: [
-              {
-                type: 'tpl',
-                tpl: '表单设计器',
+        {renderAmis({
+          type: 'form',
+          mode: 'inline',
+          title: '',
+          className: 'p-t p-l p-r',
+          wrapWithPanel: false,
+          body: [
+            {
+              type: 'tpl',
+              tpl: '表单设计器',
+            },
+            {
+              type: 'switch',
+              option: '预览',
+              name: 'preview',
+              className: 'm-l',
+              onChange: function (v: any) {
+                setPreview(v)
               },
-              {
-                type: 'switch',
-                option: '预览',
-                name: 'preview',
-                className: 'm-l',
-                onChange: function (v: any) {
-                  console.log(v);
-                  setPreview(v);
-                },
+            },
+            {
+              type: 'switch',
+              option: '移动端',
+              name: 'mobile',
+              onChange: function (v: any) {
+                setMobile(v)
               },
-              {
-                type: 'switch',
-                option: '移动端',
-                name: 'mobile',
-                onChange: function (v: any) {
-                  console.log(v);
-                  setMobile(v);
-                },
+            },
+            {
+              type: 'button',
+              label: '保存',
+              level: 'primary',
+              onClick: function () {
+                onSave()
               },
-              {
-                type: 'button',
-                label: '保存',
-                level: 'primary',
-                onClick: function () {
-                  onSave();
-                },
+            },
+            {
+              type: 'button',
+              label: '重置',
+              level: 'primary',
+              onClick: function () {
+                clearJSON()
               },
-              {
-                type: 'button',
-                label: '重置',
-                level: 'primary',
-                onClick: function () {
-                  clearJSON();
-                },
+            },
+            {
+              type: 'button',
+              label: '获取',
+              level: 'primary',
+              onClick: function () {
+                onGetJson()
               },
-              {
-                type: 'button',
-                label: '获取',
-                level: 'primary',
-                onClick: function () {
-                  onGetJson();
-                },
-              },
-            ],
-          })}
-        </div>
+            },
+          ],
+        })}
       </div>
       <>
         {schema ? (
@@ -157,7 +168,7 @@ export function Amis() {
             preview={preview}
             isMobile={mobile}
             onChange={onChange}
-            value={schema}
+            value={schema as SchemaObject}
             theme={'cxd'}
             // className="is-fixed"
             onSave={onSave}
@@ -165,7 +176,7 @@ export function Amis() {
         ) : null}
       </>
     </div>
-  );
+  )
 }
 
-export default Amis;
+export default Amis
